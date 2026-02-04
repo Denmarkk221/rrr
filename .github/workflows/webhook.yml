@@ -1,0 +1,26 @@
+name: 🤖 Telegram Bot Webhook
+
+on:
+  repository_dispatch:
+    types: [telegram_message]
+
+jobs:
+  process-command:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Обрабатываем команду
+      env:
+        BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+      run: |
+        # Получаем данные из запроса
+        # Это упрощённая версия - на самом деле нужен сервер
+        
+        echo "Получено сообщение от Telegram"
+        
+        # Здесь будет сложная логика обработки
+        
+        # Пока просто отправляем тестовый ответ
+        curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+          -d "chat_id=ВАШ_CHAT_ID" \
+          -d "text=тест сработал!"
