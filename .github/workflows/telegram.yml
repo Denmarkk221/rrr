@@ -1,0 +1,27 @@
+name: 🚀 Simple Telegram Bot
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: 'Текст сообщения'
+        required: false
+        default: '🎉 Привет от GitHub Actions!'
+
+jobs:
+  send-message:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📨 Отправляем в Telegram
+      env:
+        BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+        CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      run: |
+        echo "🔄 Отправляю сообщение..."
+        
+        curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+          -d "chat_id=$CHAT_ID" \
+          -d "text=${{ github.event.inputs.text }}"
+        
+        echo "✅ Сообщение отправлено!"
