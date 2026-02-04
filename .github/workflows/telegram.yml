@@ -1,27 +1,80 @@
-name: 🚀 Simple Telegram Bot
+name: 🚀 Telegram Multi-Messages
 
 on:
   workflow_dispatch:
     inputs:
-      text:
-        description: 'Текст сообщения'
+      count:
+        description: 'Сколько сообщений отправить?'
         required: false
-        default: '🎉 Привет от GitHub Actions!'
+        default: '10'
+      delay:
+        description: 'Пауза между сообщениями (секунд)'
+        required: false
+        default: '10'
 
 jobs:
-  send-message:
+  telegram-blast:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     
     steps:
-    - name: 📨 Отправляем в Telegram
+    - name: 📨 Массовая отправка
       env:
         BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
         CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
       run: |
-        echo "🔄 Отправляю сообщение..."
+        echo "🎯 Начинаю отправку ${{ github.event.inputs.count }} сообщений"
+        echo "⏱️  Интервал: ${{ github.event.inputs.delay }} секунд"
         
+        for i in $(seq 1 ${{ github.event.inputs.count }})
+        do
+          # Создаём сообщение
+          MESSAGE="📨 Сообщение #$i из ${{ github.event.inputs.count }}
+          
+          🕐 Время: $(date '+%H:%M:%S')
+          📅 Дата: $(date '+%d.%m.%Y')
+          
+          Это тестовое сообщение от GitHub Actions!
+          
+          🔄 Интервал: ${{ github.event.inputs.delay }} секунд
+          ⏳ Следующее через: $(( (${{ github.event.inputs.count }} - i) * ${{ github.event.inputs.delay }} )) секунд"
+          
+          # Отправляем в Telegram
+          curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+            -d "chat_id=$CHAT_ID" \
+            -d "text=$MESSAGE"
+          
+          echo "[$(date '+%H:%M:%S')] ✅ Отправлено #$i"
+          
+          # Пауза между сообщениями
+          if [ $i -lt ${{ github.event.inputs.count }} ]; then
+            echo "⏳ Жду ${{ github.event.inputs.delay }} секунд до следующего..."
+            sleep ${{ github.event.inputs.delay }}
+          fi
+        done
+        
+        echo "🎉 ГОТОВО! Отправлено ${{ github.event.inputs.count }} сообщений!"
+        
+        # Финальное сообщение
         curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
           -d "chat_id=$CHAT_ID" \
-          -d "text=${{ github.event.inputs.text }}"
-        
-        echo "✅ Сообщение отправлено!"
+          -d "text=🎉 ВСЁ ЗАВЕРШЕНО!
+          
+          Отправлено ${{ github.event.inputs.count }} сообщений
+          Интервал: ${{ github.event.inputs.delay }} секунд
+          Время окончания: $(date '+%H:%M:%S')
+          
+          Хорошего дня! ✨"
+
+    - name: 📊 Генерация отчёта
+      run: |
+        echo "========================================="
+        echo "           📋 ДЕТАЛЬНЫЙ ОТЧЁТ           "
+        echo "========================================="
+        echo "🆔 Workflow: ${{ github.workflow }}"
+        echo "🔢 Run ID: ${{ github.run_id }}"
+        echo "📨 Сообщений отправлено: ${{ github.event.inputs.count }}"
+        echo "⏱️  Интервал отправки: ${{ github.event.inputs.delay }}сек"
+        echo "⏰ Общее время: $(( ${{ github.event.inputs.count }} * ${{ github.event.inputs.delay }} ))сек"
+        echo "✅ Статус: ВЫПОЛНЕНО УСПЕШНО"
+        echo "========================================="
